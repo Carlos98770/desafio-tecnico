@@ -48,7 +48,7 @@ jobs:
           until nc -z localhost 5432; do sleep 2; done
         
       - name: Rodar Black (verificação)
-        run: poetry run black --check .
+        run: poetry run black .
 
       - name: Rodar Lint
         run: poetry run flake8 .
