@@ -1,0 +1,84 @@
+name: deploy_aws_api
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Instalar dependências
+        run: poetry install --with dev
+
+      - name: Esperar banco de dados
+        run: |
+          echo "Aguardando PostgreSQL..."
+          until nc -z localhost 5432; do sleep 2; done
+
+      - name: Rodar Lint
+        run: poetry run flake8 .
+
+      - name: Rodar Testes
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+        run: |
+          poetry run python manage.py migrate
+          poetry run python manage.py test api
+
+      - name: Build da imagem Docker
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest .
+
+      - name: Login no DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Enviar imagem para DockerHub
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest
+
+      - name: Deploy na AWS EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd ~/app || mkdir ~/app && cd ~/app
+            echo "Atualizando código..."
+            docker-compose down || true
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest
+            docker-compose up -d --build
+            echo "✅ Deploy completo!"
