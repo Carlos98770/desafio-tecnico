@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from .models import Profissional, Consultation
 from .serializers import ProfissionalSerializer, ConsultationSerializer
 from rest_framework import viewsets
