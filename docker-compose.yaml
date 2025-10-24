@@ -17,24 +17,26 @@ services:
 
   # 🚀 Aplicação Django
   app:
-    # image: carlos98770/django_rest-api:latest
-    # container_name: app_app_1
-    # env_file:
-    #   - .env
-    # depends_on:
-    #   - db
-    # ports:
-    #   - "8000:8000"  
-
-    build: .
-    volumes:
-      - .:/app
+    #producao
+    image: carlos98770/django_rest-api:latest
+    container_name: app_app_1
     env_file:
       - .env
     depends_on:
       - db
     ports:
-      - "8000:8000"
+      - "8000:8000"  
+
+    #desenvolvimento
+    # build: .
+    # volumes:
+    #   - .:/app
+    # env_file:
+    #   - .env
+    # depends_on:
+    #   - db
+    # ports:
+    #   - "8000:8000"
     
 
 volumes:
