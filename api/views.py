@@ -30,7 +30,11 @@ class ConsultationViewSet(viewsets.ModelViewSet):
             professional_id = int(professional_id)  # validação + sanitização
         except ValueError:
             return Response({"detail": "ID não inteiro."}, status=400)
-
+    
         consultas = self.queryset.filter(professional__id=professional_id)
+
+        if not consultas.exists():
+            return Response({"detail": "Nenhuma consulta encontrada para este profissional."}, status=404)
+
         serializer = ConsultationSerializer(consultas, many=True)
         return Response(serializer.data)
