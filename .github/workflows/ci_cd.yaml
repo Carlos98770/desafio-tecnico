@@ -46,7 +46,7 @@ jobs:
       - name: Esperar banco de dados
         run: |
           echo "Aguardando PostgreSQL..."
-          until nc -z localhost 5432; do sleep 2; done
+          until nc -z postgres 5432; do sleep 2; done
         
       - name: Rodar Black (verificação)
         run: poetry run black .
