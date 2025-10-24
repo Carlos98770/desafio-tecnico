@@ -40,7 +40,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Instalar dependências
-        run: poetry install --with dev
+        run: poetry install 
 
       - name: Esperar banco de dados
         run: |
