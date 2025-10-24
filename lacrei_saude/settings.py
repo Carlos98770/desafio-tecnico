@@ -25,8 +25,7 @@ SECRET_KEY = 'django-insecure-pypmw08e2qtsb1fjkzyt6&^w68m)#ky^q!uzf)yz!0z5btod=%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 
 # Application definition
 
@@ -79,11 +78,11 @@ WSGI_APPLICATION = 'lacrei_saude.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lacrei_saude',       
-        'USER': 'teste',    
-        'PASSWORD': '1234',
+        'NAME': os.environ.get("DB_NAME"),      
+        'USER': os.environ.get("DB_USER"),    
+        'PASSWORD': os.environ.get("DB_PASSWORD"),
         'HOST': 'db',       
-        'PORT': '5432',            
+        'PORT': os.environ.get("DB_PORT"),            
     }
 }
 
