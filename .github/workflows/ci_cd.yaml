@@ -46,6 +46,9 @@ jobs:
         run: |
           echo "Aguardando PostgreSQL..."
           until nc -z localhost 5432; do sleep 2; done
+        
+      - name: Rodar Black (verificação)
+        run: poetry run black --check .
 
       - name: Rodar Lint
         run: poetry run flake8 .
