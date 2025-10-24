@@ -1,6 +1,7 @@
-
+version: "3.9"
 
 services:
+  # 🐘 Banco de Dados PostgreSQL
   db:
     image: postgres:15
     container_name: postgres_db
@@ -14,15 +15,27 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
 
+  # 🚀 Aplicação Django
   app:
-    image: carlos98770/django_rest-api:latest
+    # image: carlos98770/django_rest-api:latest
+    # container_name: app_app_1
+    # env_file:
+    #   - .env
+    # depends_on:
+    #   - db
+    # ports:
+    #   - "8000:8000"  
+
+    build: .
+    volumes:
+      - .:/app
     env_file:
       - .env
     depends_on:
       - db
     ports:
-      - "8000:8000" # idealmente atrás de um reverse proxy
+      - "8000:8000"
+    
 
 volumes:
   postgres_data:
-

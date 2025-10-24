@@ -24,9 +24,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-pypmw08e2qtsb1fjkzyt6&^w68m)#ky^q!uzf)yz!0z5btod=%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+# Lê os hosts do .env
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+
+# Adiciona automaticamente hosts locais quando estiver em DEBUG
+if DEBUG:
+    ALLOWED_HOSTS += ["127.0.0.1", "localhost"]
+
+# Remove entradas vazias (caso haja vírgula sobrando)
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # Application definition
 
