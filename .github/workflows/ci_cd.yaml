@@ -46,7 +46,7 @@ jobs:
       - name: Esperar banco de dados
         run: |
           echo "Aguardando PostgreSQL..."
-          until nc -z db 5432; do sleep 2; done
+          until nc -z localhost 5432; do sleep 2; done
         
       - name: Rodar Black (verificação)
         run: poetry run black .
@@ -56,7 +56,7 @@ jobs:
 
       - name: Rodar Testes
         env:
-          DATABASE_URL: postgres://postgres:postgres@db:5432/test_db
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
         run: |
           poetry run python manage.py migrate
           poetry run python manage.py test api
