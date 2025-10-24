@@ -121,7 +121,7 @@ USE_TZ = True
 
 # Ou permitir apenas origens específicas (mais seguro)
 CORS_ALLOWED_ORIGINS = [
-#    "http://localhost:8000",
+   "http://localhost:8000",
 ]
 
 
