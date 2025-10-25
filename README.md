@@ -365,6 +365,7 @@ A aplicação está hospedada em uma instância **AWS EC2 (Ubuntu Server 22.04)*
 | **Produção** | [`http://54.163.215.33:8000`](http://54.163.215.33:8000) | 8000  | Ambiente principal (branch `main`)    |
 | **Staging**  | [`http://54.163.215.33:8001`](http://54.163.215.33:8001) | 8001  | Ambiente de testes (branch `develop`) |
 
+- Api key para testes na porta 8000 : Api-Key 1234567890abcdef
 
 
 ## 🔒 Segurança e GitHub Secrets
