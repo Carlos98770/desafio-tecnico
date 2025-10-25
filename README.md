@@ -356,6 +356,17 @@ Graças ao deploy que utiliza tags de imagem únicas baseadas no commit, um roll
 5.  **Altere** a linha `image:` para apontar para a tag da versão estável anterior.
 6.  **Execute** `docker-compose up -d`. O Docker irá parar o container com bug e substituí-lo pela versão anterior em segundos.
 
+### 🌍 Endereços de Acesso
+
+A aplicação está hospedada em uma instância **AWS EC2 (Ubuntu Server 22.04)** e pode ser acessada nos seguintes endereços públicos:
+
+| Ambiente     | URL de Acesso                                            | Porta | Descrição                             |
+| ------------- | -------------------------------------------------------- | ----- | ------------------------------------- |
+| **Produção** | [`http://54.163.215.33:8000`](http://54.163.215.33:8000) | 8000  | Ambiente principal (branch `main`)    |
+| **Staging**  | [`http://54.163.215.33:8001`](http://54.163.215.33:8001) | 8001  | Ambiente de testes (branch `develop`) |
+
+
+
 ## 🔒 Segurança e GitHub Secrets
 
 A segurança das credenciais é fundamental e é tratada da seguinte forma:
