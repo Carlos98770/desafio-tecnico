@@ -23,13 +23,16 @@ class ConsultasApiTest(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Api-Key {settings.API_KEY}')
 
     def test_list_Consultas(self):
+
         url = reverse('consultas-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
     def test_create_Consultas(self):
+
         url = reverse('consultas-list')
+
         data = {
             "data": (timezone.now() + timedelta(days=3)).isoformat(),
             "professional": self.prof.id
