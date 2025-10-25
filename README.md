@@ -17,13 +17,15 @@ O projeto é totalmente containerizado com **Docker**, utiliza **PostgreSQL** co
 - [Pipeline de CI/CD](#-pipeline-de-cicd)
 - [Deploy na AWS EC2](#-deploy-na-aws-ec2)
 - [Segurança e GitHub Secrets](#-segurança-e-github-secrets)
+- [Explicações sobre Decisões Técnicas](#-explicações-sobre-decisões-técnicas)
+- [Decisões, Dificuldades e Melhorias](#-decisões-dificuldades-e-melhorias)
 - [Autor](#-autor)
 
 ---
 
 ## 🚀 Tecnologias Utilizadas
 
-Este projeto utiliza um stack moderno focado em escalabilidade e boas práticas de DevOps:
+Este projeto utiliza um stack moderno focado em escalabilidade:
 
 -   🐍 **Python** & **Poetry**: Gerenciamento de dependências e ambiente virtual.
 -   💻 **Django** & **Django REST Framework**: Backend robusto para criação da API.
@@ -285,7 +287,6 @@ Para que o deploy automatizado funcione, o servidor EC2 foi configurado com os s
     * Porta `8001`: Para a aplicação de **Staging**.
     * Porta `5432` (DB Produção) e `5433` (DB Staging).
 3.  **Chave SSH:** A chave pública SSH do repositório (`EC2_SSH_KEY`) está autorizada no arquivo `~/.ssh/authorized_keys` do usuário de deploy.
-4.  **Arquivo de Swap:** Um arquivo de swap foi configurado na instância para prover memória virtual, garantindo que os dois ambientes possam rodar simultaneamente sem falhas por falta de RAM (`Exited (137)`).
 
 ### Ambientes (Staging e Produção)
 
@@ -390,11 +391,7 @@ A decisão de arquitetura mais importante foi a estratégia de deploy e rollback
 * **Separação de Ambientes (Staging/Produção):** Decidi criar dois ambientes isolados (`~/app_prod` e `~/app_staging`) no mesmo servidor, cada um com seu próprio `docker-compose.yaml` e banco de dados.
 * **Por quê?** Isso me permitiu ter um ambiente seguro de testes (`staging`) para validar as mudanças da branch `develop` antes de enviá-las para os usuários reais na branch `main`.
 
-### Dificuldades Encontradas
 
-Como um desenvolvedor iniciante, o maior desafio foi integrar múltiplas tecnologias que eu não conhecia profundamente.
-
-* **Integração do Ecossistema DevOps:** Fazer o Django, Docker, PostgreSQL, GitHub Actions e AWS EC2 "conversarem" corretamente foi complexo.
 
 ### Dificuldades Encontradas
 
