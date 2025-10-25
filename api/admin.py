@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Profissional, Consultation
+from .models import Profissional, Consultas
 
 # Register your models here.
 
 admin.site.register(Profissional)
-admin.site.register(Consultation)
+admin.site.register(Consultas)
