@@ -195,11 +195,11 @@ A URL base para todos os endpoints é `/api/`.
 | `PUT` | `/profissionais/<id>/` | Atualiza (completo) um profissional específico. |
 | `PATCH` | `/profissionais/<id>/` | Atualiza (parcial) um profissional específico. |
 | `DELETE` | `/profissionais/<id>/` | Remove um profissional. |
-| `GET` | `/consultations/` | Lista todas as consultas agendadas. |
-| `POST` | `/consultations/` | Agenda uma nova consulta. |
-| `GET` | `/consultations/<id>/` | Obtém detalhes de uma consulta específica. |
-| `DELETE` | `/consultations/<id>/` | Cancela (remove) uma consulta. |
-| `GET` | `/consultations/profissional/<id>/` | Lista todas as consultas de um profissional específico. |
+| `GET` | `/consultas/` | Lista todas as consultas agendadas. |
+| `POST` | `/consultas/` | Agenda uma nova consulta. |
+| `GET` | `/consultas/<id>/` | Obtém detalhes de uma consulta específica. |
+| `DELETE` | `/consultas/<id>/` | Cancela (remove) uma consulta. |
+| `GET` | `/consultas/profissional/<id>/` | Lista todas as consultas de um profissional específico. |
 
 ---
 
