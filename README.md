@@ -299,6 +299,38 @@ Para garantir o isolamento total, os ambientes são gerenciados em diretórios s
 * **Staging:**
     * **Local:** `~/app_staging/`
     * **Arquivos:** Contém seu próprio `docker-compose.yaml` (com `container_name: ..._staging`, porta `8001`) e seu arquivo `.env` (com credenciais de teste/staging).
+  
+  Exemplo de docker-compose.yaml usado:
+  ```sh
+    version: "3.9"
+    services:
+      db:
+        image: postgres:15
+        container_name: postgres_db_staging
+        restart: always
+        environment:
+          POSTGRES_DB: ${DB_NAME}
+          POSTGRES_USER: ${DB_USER}
+          POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+          - ./data/db_staging:/var/lib/postgresql/data
+        ports:
+          - "5433:5432" # Porta diferente para não dar conflito com a produção
+      app:
+        image: carlos98770/django-api:e927c62
+        container_name: app_staging
+        restart: always
+        env_file: .env
+        depends_on:
+          - db
+        ports:
+          - "8001:8000" # Porta diferente
+    volumes:
+      postgres_data:  
+    ```
+
+
+  
 
 ### Processo de Deploy (CI/CD)
 
