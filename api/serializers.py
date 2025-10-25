@@ -1,4 +1,4 @@
-from .models import Profissional, Consultation
+from .models import Profissional, Consultas
 from rest_framework import serializers
 from django.utils import timezone
 import re
@@ -38,9 +38,9 @@ class ProfissionalSerializer(serializers.ModelSerializer):
 
     
 
-class ConsultationSerializer(serializers.ModelSerializer):
+class ConsultasSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Consultation
+        model = Consultas
         fields = '__all__'
     
     

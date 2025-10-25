@@ -1,5 +1,5 @@
-from .models import Profissional, Consultation
-from .serializers import ProfissionalSerializer, ConsultationSerializer
+from .models import Profissional, Consultas
+from .serializers import ProfissionalSerializer, ConsultasSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -19,9 +19,9 @@ class ProfissionalViewSet(viewsets.ModelViewSet):
         # PUT/PATCH /profissionais/<id>/ → update
         # DELETE /profissionais/<id>/ → destroy
 
-class ConsultationViewSet(viewsets.ModelViewSet):
-    queryset = Consultation.objects.all()
-    serializer_class = ConsultationSerializer
+class ConsultasViewSet(viewsets.ModelViewSet):
+    queryset = Consultas.objects.all()
+    serializer_class = ConsultasSerializer
     permission_classes = [HasAPIKey]
 
     @action(detail=False, methods=['get'], url_path='profissional/(?P<professional_id>[^/.]+)')
@@ -36,5 +36,5 @@ class ConsultationViewSet(viewsets.ModelViewSet):
         if not consultas.exists():
             return Response({"detail": "Nenhuma consulta encontrada para este profissional."}, status=404)
 
-        serializer = ConsultationSerializer(consultas, many=True)
+        serializer = ConsultasSerializer(consultas, many=True)
         return Response(serializer.data)

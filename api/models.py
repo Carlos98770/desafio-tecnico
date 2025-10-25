@@ -10,7 +10,7 @@ class Profissional(models.Model):
     def __str__(self):
         return self.social_name
     
-class Consultation(models.Model):
+class Consultas(models.Model):
     
     data = models.DateTimeField()
     professional = models.ForeignKey(Profissional, on_delete=models.CASCADE)
