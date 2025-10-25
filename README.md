@@ -17,13 +17,15 @@ O projeto é totalmente containerizado com **Docker**, utiliza **PostgreSQL** co
 - [Pipeline de CI/CD](#-pipeline-de-cicd)
 - [Deploy na AWS EC2](#-deploy-na-aws-ec2)
 - [Segurança e GitHub Secrets](#-segurança-e-github-secrets)
+- [Explicações sobre Decisões Técnicas](#-explicações-sobre-decisões-técnicas)
+- [Decisões, Dificuldades e Melhorias](#-decisões-dificuldades-e-melhorias)
 - [Autor](#-autor)
 
 ---
 
 ## 🚀 Tecnologias Utilizadas
 
-Este projeto utiliza um stack moderno focado em escalabilidade e boas práticas de DevOps:
+Este projeto utiliza um stack moderno focado em escalabilidade:
 
 -   🐍 **Python** & **Poetry**: Gerenciamento de dependências e ambiente virtual.
 -   💻 **Django** & **Django REST Framework**: Backend robusto para criação da API.
@@ -185,7 +187,7 @@ Para executar este projeto localmente usando Docker, siga os passos abaixo.
 
 ## 🗺️ Documentação da API (Endpoints)
 
-A URL base para todos os endpoints é `/api/`.
+A URL base para todos os endpoints é `/api/`. 
 
 | Método HTTP | Endpoint | Descrição |
 | :--- | :--- | :--- |
@@ -213,7 +215,7 @@ Para se autenticar, inclua a chave no cabeçalho `Authorization` da sua requisi�
 **Exemplo de Header:**
 
 ```sh
-    Authorization: ApiKey SUA_CHAVE_SECRETA_DEFINIDA_NO_ENV
+    Authorization: Api-Key SUA_CHAVE_SECRETA_DEFINIDA_NO_ENV
 ```
 
 A chave utilizada pelo servidor é definida na variável de ambiente `API_KEY`.
@@ -242,7 +244,7 @@ docker-compose exec app poetry run python manage.py test api
 
 Este projeto utiliza **GitHub Actions** para automação de Integração Contínua (CI) e Deploy Contínuo (CD). O fluxo de trabalho está definido no arquivo `.github/workflows/ci_cd.yaml`.
 
-O pipeline é acionado automaticamente a cada `push` ou `pull request` para a branch `main`.
+O pipeline é acionado automaticamente a cada `push` ou `pull request` para a branch `main` e `develop`.
 
 ### 1. Integração Contínua (CI)
 
@@ -260,35 +262,110 @@ A etapa de CD só é executada se a etapa de CI for bem-sucedida:
 
 1.  **Build da Imagem:** A imagem Docker da aplicação é construída localmente no runner do GitHub.
 2.  **Login no Docker Hub:** O pipeline se autentica no Docker Hub usando as credenciais `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN` armazenadas nos secrets.
-3.  **Push da Imagem:** A imagem recém-construída é enviada para o registro do Docker Hub com a tag `latest` (ex: `carlos98770/django-api:latest`).
+3.  **Push da Imagem:** A imagem recém-construída é enviada para o registro do Docker Hub.
 4.  **Deploy na AWS EC2:**
     * O pipeline se conecta à instância EC2 via SSH (usando `EC2_HOST`, `EC2_USER`, `EC2_KEY`).
     * Um script é executado remotamente no servidor para:
-        * Navegar até o diretório da aplicação (`~/app`).
+        * Navegar até o diretório da aplicação (`~/app_prod`) ou (`~/app_staging`).
         * Parar os serviços atuais com `docker-compose down`.
-        * Baixar a nova imagem que acabamos de enviar para o Docker Hub (`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest`).
+        * Baixar a nova imagem que acabamos de enviar para o Docker Hub (`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:{tag}`).
         * Iniciar os serviços novamente com a imagem atualizada (`docker-compose up -d --build`).
 
 ---
 
 ## ☁️ Deploy na AWS EC2
 
-A aplicação é hospedada em uma instância **AWS EC2** (Ubuntu Server).
+A aplicação é hospedada em uma instância **AWS EC2** (Ubuntu Server), onde coexistem dois ambientes isolados: **Staging** (para testes) e **Produção**.
 
 ### Configuração do Servidor
 
-Para que o deploy automatizado funcione, o servidor EC2 deve ter:
+Para que o deploy automatizado funcione, o servidor EC2 foi configurado com os seguintes pré-requisitos:
 
-1.  **Docker** instalado.
-2.  **Docker Compose** instalado.
-3.  As portas necessárias (ex: `8000`) liberadas no Security Group.
-4.  A chave pública SSH correspondente à chave privada (`EC2_SSH_KEY`) adicionada ao arquivo `~/.ssh/authorized_keys` do usuário de deploy.
+1.  **Docker** e **Docker Compose** instalados.
+2.  **Portas Liberadas:** As portas necessárias estão abertas no Security Group da AWS:
+    * Porta `8000`: Para a aplicação de **Produção**.
+    * Porta `8001`: Para a aplicação de **Staging**.
+    * Porta `5432` (DB Produção) e `5433` (DB Staging).
+3.  **Chave SSH:** A chave pública SSH do repositório (`EC2_SSH_KEY`) está autorizada no arquivo `~/.ssh/authorized_keys` do usuário de deploy.
 
-### Processo de Deploy
+### Ambientes (Staging e Produção)
 
-O pipeline de CI/CD é responsável por todo o processo. Ao receber um `push | pull request` na `main`, o GitHub Actions constrói a nova imagem e "avisa" o servidor EC2 (via SSH) para baixar e executar essa nova versão, garantindo um deploy "zero-downtime" (ou com o mínimo possível) gerenciado pelo Docker Compose.
+Para garantir o isolamento total, os ambientes são gerenciados em diretórios separados no servidor, cada um contendo seus próprios arquivos de configuração:
 
----
+* **Produção:**
+    * **Local:** `~/app_prod/`
+    * **Arquivos:** Contém seu próprio `docker-compose.yaml` (com `container_name: ..._prod`, porta `8000`) e seu arquivo `.env` (com as credenciais de produção).
+
+* **Staging:**
+    * **Local:** `~/app_staging/`
+    * **Arquivos:** Contém seu próprio `docker-compose.yaml` (com `container_name: ..._staging`, porta `8001`) e seu arquivo `.env` (com credenciais de teste/staging).
+  
+  Exemplo de docker-compose.yaml usado:
+  ```sh
+    version: "3.9"
+    services:
+      db:
+        image: postgres:15
+        container_name: postgres_db_staging
+        restart: always
+        environment:
+          POSTGRES_DB: ${DB_NAME}
+          POSTGRES_USER: ${DB_USER}
+          POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+          - ./data/db_staging:/var/lib/postgresql/data
+        ports:
+          - "5433:5432" # Porta diferente para não dar conflito com a produção
+      app:
+        image: carlos98770/django-api:e927c62
+        container_name: app_staging
+        restart: always
+        env_file: .env
+        depends_on:
+          - db
+        ports:
+          - "8001:8000" # Porta diferente
+    volumes:
+      postgres_data:  
+    ```
+
+
+  
+
+### Processo de Deploy (CI/CD)
+
+O pipeline de CI/CD (definido em `.github/workflows/ci_cd.yml`) agora gerencia os dois ambientes baseado na estratégia de branches:
+
+1.  **Build e Teste:** A cada `push` ou `pull request` em `main` ou `develop`, o pipeline executa os testes, lints e o build da imagem Docker.
+2.  **Tagging e Push:** A imagem é versionada com o hash do commit (ex: `...:a1b2c3d`) e enviada ao Docker Hub.
+3.  **Deploy em Staging:**
+    * **Gatilho:** Um `push` (ou merge) na branch `develop`.
+    * **Ação:** O pipeline se conecta via SSH, entra no diretório `~/app_staging`, atualiza o `docker-compose.yaml` para usar a nova tag da imagem, baixa a imagem e reinicia os serviços de *staging*.
+4.  **Deploy em Produção:**
+    * **Gatilho:** Um `push` (ou merge) na branch `main`.
+    * **Ação:** O pipeline executa o mesmo processo, mas desta vez no diretório `~/app_prod`, atualizando a aplicação de produção.
+
+### Fluxo de Rollback
+
+Graças ao deploy que utiliza tags de imagem únicas baseadas no commit, um rollback de emergência é direto e seguro:
+
+1.  **Identifique** a tag da imagem da versão estável anterior (ex: `...:z9y8x7w`) nos logs do Docker Hub ou do GitHub Actions.
+2.  **Acesse** o servidor EC2 via SSH.
+3.  **Navegue** até o diretório do ambiente com falha (`~/app_prod` ou `~/app_staging`).
+4.  **Edite** o `docker-compose.yaml` (ex: `nano docker-compose.yaml`).
+5.  **Altere** a linha `image:` para apontar para a tag da versão estável anterior.
+6.  **Execute** `docker-compose up -d`. O Docker irá parar o container com bug e substituí-lo pela versão anterior em segundos.
+
+### 🌍 Endereços de Acesso
+
+A aplicação está hospedada em uma instância **AWS EC2 (Ubuntu Server 22.04)** e pode ser acessada nos seguintes endereços públicos:
+
+| Ambiente     | URL de Acesso                                            | Porta | Descrição                             |
+| ------------- | -------------------------------------------------------- | ----- | ------------------------------------- |
+| **Produção** | [`http://54.163.215.33:8000`](http://54.163.215.33:8000) | 8000  | Ambiente principal (branch `main`)    |
+| **Staging**  | [`http://54.163.215.33:8001`](http://54.163.215.33:8001) | 8001  | Ambiente de testes (branch `develop`) |
+
+
 
 ## 🔒 Segurança e GitHub Secrets
 
@@ -326,7 +403,7 @@ Diversas escolhas de arquitetura e tecnologia foram feitas para garantir robuste
 ### 3. Autenticação por API Key (Customizada)
 
 * Foi implementada uma autenticação simples baseada em uma **API Key estática**, validada por uma permissão customizada (`api/permissions.py`). O `Header` esperado é `Authorization: ApiKey SUA_CHAVE`.
-*  Esta é uma abordagem pragmática e segura para proteger endpoints de API (especialmente para comunicação máquina-a-máquina ou M2M). Ela é *stateless* (não exige uma sessão de banco de dados) e sua implementação é direta e adequada ao escopo do projeto.
+
 
 ### 4. Deploy na AWS EC2 via SSH
 
@@ -343,8 +420,40 @@ Diversas escolhas de arquitetura e tecnologia foram feitas para garantir robuste
     3.  **Execução do Servidor:** Somente após o banco estar pronto e as migrações aplicadas, o servidor Django é iniciado. Ele é executado em `0.0.0.0:8000` para ser acessível de fora do container, permitindo que o Docker exponha a porta `8000` para a máquina host.
 
 
-## 📝 Decisões de Implementação e Melhorias Propostas
-melhorias: automatizar a questao do docker-compose.yaml producao e densevolvimento
+## 📝 Decisões, Dificuldades e Melhorias
+
+### Decisões de Implementação
+
+A decisão de arquitetura mais importante foi a estratégia de deploy e rollback.
+
+* **Versionamento de Imagens no Docker Hub:** Em vez de usar apenas a tag `:latest` (que é sobrescrita a cada deploy), o pipeline de CI/CD foi configurado para criar uma tag única para cada commit (ex: `...:a1b2c3d`).
+* **Por quê?** Isso cria um "histórico" permanente de todas as versões da aplicação no Docker Hub. Se um novo deploy falhar, a imagem da versão anterior ainda existe e pode ser acessada, o que torna o **rollback manual** (descrito no fluxo de deploy) um processo simples e seguro.
+
+* **Separação de Ambientes (Staging/Produção):** Decidi criar dois ambientes isolados (`~/app_prod` e `~/app_staging`) no mesmo servidor, cada um com seu próprio `docker-compose.yaml` e banco de dados.
+* **Por quê?** Isso me permitiu ter um ambiente seguro de testes (`staging`) para validar as mudanças da branch `develop` antes de enviá-las para os usuários reais na branch `main`.
+
+
+
+### Dificuldades Encontradas
+
+Como desenvolvedor iniciante, o maior desafio foi integrar múltiplas tecnologias novas de uma só vez.
+
+* **Ferramentas até então desconhecidas:** Tive que aprender na prática a usar **Docker** e **Docker Compose** para criar ambientes de desenvolvimento e produção isolados. Além disso, aprender a configurar e interagir com uma instância **AWS EC2** (lidando com chaves SSH, Security Groups e gerenciamento de memória) foi um grande passo além do desenvolvimento local.
+
+* **Fluxo CI/CD:** A parte mais complexa não foi apenas escrever o arquivo `.yml` do GitHub Actions, mas **depurá-lo**. Entender *por que* o pipeline ficava "verde" (sucesso) no GitHub, mas a aplicação não subia na EC2, foi o maior desafio. Isso me forçou a aprender a ler os logs do Docker remotamente (descobrindo o erro `Exited (137)` de falta de memória) e a entender como os comandos de deploy (como o `sed`) poderiam falhar silenciosamente.
+
+* **Criação de Testes:** Além de aprender a escrever os testes unitários e de integração (`manage.py test api`), o desafio foi fazer o pipeline **usar** esses testes de forma eficaz. Configurar o workflow de CI para iniciar um banco de dados PostgreSQL temporário (na seção `services:`) apenas para os testes foi um aprendizado crucial para garantir que o código era validado em um ambiente realista antes de qualquer deploy.
+
+Apesar das dificuldades, foi uma experiência excelente para estudar e aprender como um projeto real funciona do código à produção.
+
+### Melhorias Propostas (Próximos Passos)
+
+O projeto está funcional, mas para ser considerado pronto para produção real, estas seriam as próximas melhorias:
+
+* **Automatizar o Rollback:** Atualmente, o rollback é um processo manual (acessar a EC2, editar o `.yaml`, rodar `docker-compose`). Uma melhoria seria criar um *outro* pipeline no GitHub Actions (talvez usando `workflow_dispatch` com um input) que receba a tag de uma imagem estável e execute o rollback automaticamente.
+* **Gunicorn + Nginx:** O log da aplicação avisa que o `runserver` não é para produção. O próximo passo seria:
+    1.  Substituir `python manage.py runserver` por `gunicorn` (um servidor de aplicação WSGI robusto).
+    2.  Adicionar um **Nginx** como proxy reverso para gerenciar o tráfego, servir os arquivos estáticos (corrigindo o CSS da interface do DRF) e habilitar HTTPS.
 
 
 
