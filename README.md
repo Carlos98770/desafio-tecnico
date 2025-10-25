@@ -215,7 +215,7 @@ Para se autenticar, inclua a chave no cabeçalho `Authorization` da sua requisi�
 **Exemplo de Header:**
 
 ```sh
-    Authorization: ApiKey SUA_CHAVE_SECRETA_DEFINIDA_NO_ENV
+    Authorization: Api-Key SUA_CHAVE_SECRETA_DEFINIDA_NO_ENV
 ```
 
 A chave utilizada pelo servidor é definida na variável de ambiente `API_KEY`.
