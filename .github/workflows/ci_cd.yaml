@@ -61,8 +61,23 @@ jobs:
           poetry run python manage.py migrate
           poetry run python manage.py test api
 
+      - name: Definir tag da imagem (Commit SHA)
+        id: docker_meta
+        run: |
+          # Pega os 7 primeiros caracteres do hash do commit
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          # Exporta para ser usado em passos futuros
+          echo "IMAGE_TAG=${COMMIT_SHA}" >> $GITHUB_ENV
+
       - name: Build da imagem Docker
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest .
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        run: |
+          echo "Construindo imagem com tag: $IMAGE_TAG"
+          # 1. Constrói com a tag do commit
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/django-api:$IMAGE_TAG .
+          # 2. Adiciona a tag 'latest' à imagem recém-construída
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/django-api:$IMAGE_TAG ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest
 
       - name: Login no DockerHub
         uses: docker/login-action@v3
@@ -71,18 +86,34 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Enviar imagem para DockerHub
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        run: |
+          # 1. Envia a tag específica do commit
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/django-api:$IMAGE_TAG
+          # 2. Envia a tag 'latest'
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest
 
       - name: Deploy na AWS EC2
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }} # Pega a tag do passo "Definir tag"
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd ~/app || mkdir ~/app && cd ~/app
-            echo "Atualizando código..."
-            docker-compose down || true
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest
-            docker-compose up -d --build
-            echo "✅ Deploy completo!"
+            cd ~/app
+            echo "Iniciando deploy da tag: $IMAGE_TAG"
+
+            # 1. Modifica o docker-compose.yaml NO SERVIDOR para usar a nova tag
+            # Este comando 'sed' substitui a linha que começa com 'image:'
+            sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/django-api:${IMAGE_TAG}|g" docker-compose.yaml
+            
+            # 2. Baixa a nova imagem específica
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:${IMAGE_TAG}
+            
+            # 3. Sobe a aplicação (sem --build, pois a imagem já está pronta)
+            docker-compose up -d
+            
+            echo "✅ Deploy completo da tag: $IMAGE_TAG"
