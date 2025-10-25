@@ -22,14 +22,14 @@ class ConsultasApiTest(APITestCase):
 
         self.client.credentials(HTTP_AUTHORIZATION=f'Api-Key {settings.API_KEY}')
 
-    def test_list_Consultass(self):
-        url = reverse('Consultas-list')
+    def test_list_Consultas(self):
+        url = reverse('consultas-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
 
     def test_create_Consultas(self):
-        url = reverse('Consultas-list')
+        url = reverse('consultas-list')
         data = {
             "data": (timezone.now() + timedelta(days=3)).isoformat(),
             "professional": self.prof.id
@@ -39,13 +39,13 @@ class ConsultasApiTest(APITestCase):
         self.assertEqual(Consultas.objects.count(), 2)
 
     def test_retrieve_Consultas(self):
-        url = reverse('Consultas-detail', args=[self.consulta.id])
+        url = reverse('consultas-detail', args=[self.consulta.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['professional'], self.prof.id)
 
     def test_update_Consultas(self):
-        url = reverse('Consultas-detail', args=[self.consulta.id])
+        url = reverse('consultas-detail', args=[self.consulta.id])
         nova_data = timezone.now() + timedelta(days=5)
         data = {"data": nova_data.isoformat()}
         response = self.client.patch(url, data, format='json')
@@ -54,13 +54,13 @@ class ConsultasApiTest(APITestCase):
         self.assertEqual(self.consulta.data, nova_data)
 
     def test_delete_Consultas(self):
-        url = reverse('Consultas-detail', args=[self.consulta.id])
+        url = reverse('consultas-detail', args=[self.consulta.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Consultas.objects.filter(id=self.consulta.id).exists())
 
     def test_filter_by_professional_id(self):
-        url = reverse('Consultas-por-profissional', kwargs={'professional_id': self.prof.id})
+        url = reverse('consultas-por-profissional', kwargs={'professional_id': self.prof.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
