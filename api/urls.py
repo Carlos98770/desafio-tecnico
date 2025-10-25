@@ -3,7 +3,7 @@ from .views import ProfissionalViewSet, ConsultasViewSet
 
 router = DefaultRouter()
 router.register(r'profissionais', ProfissionalViewSet, basename='profissional')
-router.register(r'consultas', ConsultasViewSet, basename='Consultas')
+router.register(r'consultas', ConsultasViewSet, basename='consultas')
 
 urlpatterns = router.urls
 
