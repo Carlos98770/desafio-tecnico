@@ -244,7 +244,7 @@ docker-compose exec app poetry run python manage.py test api
 
 Este projeto utiliza **GitHub Actions** para automação de Integração Contínua (CI) e Deploy Contínuo (CD). O fluxo de trabalho está definido no arquivo `.github/workflows/ci_cd.yaml`.
 
-O pipeline é acionado automaticamente a cada `push` ou `pull request` para a branch `main`.
+O pipeline é acionado automaticamente a cada `push` ou `pull request` para a branch `main` e `develop`.
 
 ### 1. Integração Contínua (CI)
 
@@ -262,13 +262,13 @@ A etapa de CD só é executada se a etapa de CI for bem-sucedida:
 
 1.  **Build da Imagem:** A imagem Docker da aplicação é construída localmente no runner do GitHub.
 2.  **Login no Docker Hub:** O pipeline se autentica no Docker Hub usando as credenciais `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN` armazenadas nos secrets.
-3.  **Push da Imagem:** A imagem recém-construída é enviada para o registro do Docker Hub com a tag `latest` (ex: `carlos98770/django-api:latest`).
+3.  **Push da Imagem:** A imagem recém-construída é enviada para o registro do Docker Hub.
 4.  **Deploy na AWS EC2:**
     * O pipeline se conecta à instância EC2 via SSH (usando `EC2_HOST`, `EC2_USER`, `EC2_KEY`).
     * Um script é executado remotamente no servidor para:
         * Navegar até o diretório da aplicação (`~/app_prod`) ou (`~/app_staging`).
         * Parar os serviços atuais com `docker-compose down`.
-        * Baixar a nova imagem que acabamos de enviar para o Docker Hub (`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:latest`).
+        * Baixar a nova imagem que acabamos de enviar para o Docker Hub (`docker pull ${{ secrets.DOCKERHUB_USERNAME }}/django-api:{tag}`).
         * Iniciar os serviços novamente com a imagem atualizada (`docker-compose up -d --build`).
 
 ---
@@ -360,7 +360,7 @@ Diversas escolhas de arquitetura e tecnologia foram feitas para garantir robuste
 ### 3. Autenticação por API Key (Customizada)
 
 * Foi implementada uma autenticação simples baseada em uma **API Key estática**, validada por uma permissão customizada (`api/permissions.py`). O `Header` esperado é `Authorization: ApiKey SUA_CHAVE`.
-*  Esta é uma abordagem pragmática e segura para proteger endpoints de API (especialmente para comunicação máquina-a-máquina ou M2M). Ela é *stateless* (não exige uma sessão de banco de dados) e sua implementação é direta e adequada ao escopo do projeto.
+
 
 ### 4. Deploy na AWS EC2 via SSH
 
@@ -379,8 +379,6 @@ Diversas escolhas de arquitetura e tecnologia foram feitas para garantir robuste
 
 ## 📝 Decisões, Dificuldades e Melhorias
 
-Esta seção documenta o processo de aprendizado, os desafios encontrados e as decisões de arquitetura tomadas ao longo do projeto.
-
 ### Decisões de Implementação
 
 A decisão de arquitetura mais importante foi a estratégia de deploy e rollback.
@@ -395,7 +393,7 @@ A decisão de arquitetura mais importante foi a estratégia de deploy e rollback
 
 ### Dificuldades Encontradas
 
-Como desenvolvedor iniciante, o maior desafio foi integrar múltiplas tecnologias novas de uma só vez, muitas das quais eram fundamentais para um fluxo de DevOps moderno.
+Como desenvolvedor iniciante, o maior desafio foi integrar múltiplas tecnologias novas de uma só vez.
 
 * **Ferramentas até então desconhecidas:** Tive que aprender na prática a usar **Docker** e **Docker Compose** para criar ambientes de desenvolvimento e produção isolados. Além disso, aprender a configurar e interagir com uma instância **AWS EC2** (lidando com chaves SSH, Security Groups e gerenciamento de memória) foi um grande passo além do desenvolvimento local.
 
