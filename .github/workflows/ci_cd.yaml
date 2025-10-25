@@ -1,10 +1,12 @@
-name: deploy_aws_api
+name: CI/CD - Staging e Produção (com Acionamento Manual)
 
 on:
   push:
     branches: ["main", "develop"] 
   pull_request:
     branches: ["main", "develop"]
+  
+  workflow_dispatch: # ⬅️ Permite rodar o pipeline manualmente
 
 jobs:
   build-test-deploy:
@@ -100,18 +102,14 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             APP_DIR=~/app_staging # ⬅️ Define o diretório de Staging
-            mkdir -p $APP_DIR
-            cd $APP_DIR
+            cd $APP_DIR # ⬅️ Entra no diretório que VOCÊ criou
             
             echo "Iniciando deploy de STAGING da tag: ${{ env.IMAGE_TAG }}"
             
-            # 1. Cria o .env de Staging
-            echo "${{ secrets.ENV_FILE_STAGING }}" > .env
+            # 1. (REMOVIDO) O comando que criava o .env
+            # 2. (REMOVIDO) O comando que criava o docker-compose.yaml
             
-            # 2. Cria o docker-compose.yaml de Staging
-            echo "${{ secrets.COMPOSE_FILE_STAGING }}" > docker-compose.yaml
-            
-            # 3. 🛡️ COMANDO 'sed' CORRIGIDO E SEGURO
+            # 3. 🛡️ Atualiza o docker-compose.yaml EXISTENTE
             echo "Atualizando a tag da imagem no docker-compose.yaml..."
             sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/django-api:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/django-api:${{ env.IMAGE_TAG }}|g" docker-compose.yaml
 
@@ -138,17 +136,14 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             APP_DIR=~/app_prod # ⬅️ Define o diretório de Produção
-            mkdir -p $APP_DIR
-            cd $APP_DIR
+            cd $APP_DIR # ⬅️ Entra no diretório que VOCÊ criou
             
             echo "Iniciando deploy de PRODUÇÃO da tag: ${{ env.IMAGE_TAG }}"
 
-            # 1. Cria o .env de Produção
-            echo "${{ secrets.ENV_FILE_PRODUCTION }}" > .env
-            
-            # 2. Cria o docker-compose.yaml de Produção
-            echo "${{ secrets.COMPOSE_FILE_PRODUCTION }}" > docker-compose.yaml
+            # 1. (REMOVIDO) O comando que criava o .env
+            # 2. (REMOVIDO) O comando que criava o docker-compose.yaml
 
+            # 3. 🛡️ Atualiza o docker-compose.yaml EXISTENTE
             echo "Atualizando a tag da imagem no docker-compose.yaml..."
             sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/django-api:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/django-api:${{ env.IMAGE_TAG }}|g" docker-compose.yaml
             
