@@ -29,9 +29,23 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 # Lê os hosts do .env
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 
+# Carrega as origens permitidas do .env (ex: "https://meusite.com,https://app.meusite.com")
+cors_origins_str = os.environ.get("CORS_ORIGINS", "")
+
+# Converte a string em lista, removendo espaços e entradas vazias
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in cors_origins_str.split(",") if origin.strip()
+]
+
 # Adiciona automaticamente hosts locais quando estiver em DEBUG
 if DEBUG:
     ALLOWED_HOSTS += ["127.0.0.1", "localhost"]
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:8000", 
+        "http://127.0.0.1:8000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
 # Remove entradas vazias (caso haja vírgula sobrando)
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
@@ -51,6 +65,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -58,7 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'lacrei_saude.urls'
@@ -123,12 +138,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Ou permitir apenas origens específicas (mais seguro)
-CORS_ALLOWED_ORIGINS = [
-   "http://localhost:8000",
-]
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -139,4 +148,66 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-API_KEY = os.environ.get("API_KEY")
+API_KEY = os.environ.get("API_KEY","teste-key")
+
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} | {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname}: {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        # 🧾 Log de erros
+        "file_error": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "errors.log",
+            "formatter": "verbose",
+        },
+        # 🌐 Log de acessos HTTP
+        "file_access": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "access.log",
+            "formatter": "verbose",
+        },
+        # 💬 Mostra logs também no console
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+
+    "loggers": {
+        # Logger principal do Django
+        "django": {
+            "handlers": ["console", "file_error"],
+            "level": "WARNING",
+            "propagate": True,
+        },
+        # Logger para requisições HTTP (servidor)
+        "django.server": {
+            "handlers": ["console", "file_access"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Logger para erros de requisições
+        "django.request": {
+            "handlers": ["console", "file_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
