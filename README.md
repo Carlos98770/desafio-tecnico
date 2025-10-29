@@ -206,9 +206,12 @@ A URL base para todos os endpoints é `/api/`.
 ---
 
 
-## 🔑 Autenticação
+## 🔑 Autenticação e segurança
 
-O acesso à API é protegido por **API Key**. Esta implementação utiliza uma classe de permissão customizada (`api/permissions.py`) que verifica a chave em cada requisição.
+
+A API implementa duas camadas principais de segurança: autenticação por API Key e controle de acesso de origem (CORS).
+
+1 -  **API Key**. Esta implementação utiliza uma classe de permissão customizada (`api/permissions.py`) que verifica a chave em cada requisição.
 
 Para se autenticar, inclua a chave no cabeçalho `Authorization` da sua requisição, prefixada com `ApiKey`.
 
@@ -219,6 +222,13 @@ Para se autenticar, inclua a chave no cabeçalho `Authorization` da sua requisi�
 ```
 
 A chave utilizada pelo servidor é definida na variável de ambiente `API_KEY`.
+
+2 - **CORS**:
+- O projeto utiliza django-cors-headers para restringir quais domínios podem fazer requisições à API a partir de um navegador.
+
+- Em Produção (DEBUG=False): Apenas as origens listadas na variável de ambiente CORS_ORIGINS são permitidas. Ex: CORS_ORIGINS=https://frontend.com.
+
+- Em Desenvolvimento (DEBUG=True): Para facilitar os testes locais, origens comuns como http://localhost:5173 e http://localhost:8000 são permitidas automaticamente
 
 ---
 
