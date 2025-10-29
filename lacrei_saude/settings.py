@@ -149,3 +149,65 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 API_KEY = os.environ.get("API_KEY")
+
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} | {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname}: {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        # 🧾 Log de erros
+        "file_error": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "errors.log",
+            "formatter": "verbose",
+        },
+        # 🌐 Log de acessos HTTP
+        "file_access": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "access.log",
+            "formatter": "verbose",
+        },
+        # 💬 Mostra logs também no console
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+
+    "loggers": {
+        # Logger principal do Django
+        "django": {
+            "handlers": ["console", "file_error"],
+            "level": "WARNING",
+            "propagate": True,
+        },
+        # Logger para requisições HTTP (servidor)
+        "django.server": {
+            "handlers": ["console", "file_access"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Logger para erros de requisições
+        "django.request": {
+            "handlers": ["console", "file_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
