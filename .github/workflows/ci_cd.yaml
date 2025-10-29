@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["main", "develop"]
   
-  workflow_dispatch: # ⬅️ Permite rodar o pipeline manualmente
+  workflow_dispatch:
 
 jobs:
   build-test-deploy:
