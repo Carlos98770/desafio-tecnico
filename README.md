@@ -521,6 +521,7 @@ O projeto está funcional, mas para ser considerado pronto para produção real,
 * **Gunicorn + Nginx:** O log da aplicação avisa que o `runserver` não é para produção. O próximo passo seria:
     1.  Substituir `python manage.py runserver` por `gunicorn` (um servidor de aplicação WSGI robusto).
     2.  Adicionar um **Nginx** como proxy reverso para gerenciar o tráfego, servir os arquivos estáticos (corrigindo o CSS da interface do DRF) e habilitar HTTPS.
+    3. integração com a AssAs para split de pagamento
 
 
 
