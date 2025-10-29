@@ -12,7 +12,8 @@ O projeto é totalmente containerizado com **Docker**, utiliza **PostgreSQL** co
 - [Arquitetura e Estrutura do Projeto](#-arquitetura-e-estrutura-do-projeto)
 - [Configuração do Ambiente Local](#-configuração-do-ambiente-local)
 - [Documentação da API (Endpoints)](#-documentação-da-api-endpoints)
-- [Autenticação](#-autenticação)
+- [Autenticação e Segurança](#-autenticação-e-segurança)
+- [Logs e Erros](#logs-e-erros)
 - [Testes Automatizados](#-testes-automatizados)
 - [Pipeline de CI/CD](#-pipeline-de-cicd)
 - [Deploy na AWS EC2](#-deploy-na-aws-ec2)
@@ -206,9 +207,12 @@ A URL base para todos os endpoints é `/api/`.
 ---
 
 
-## 🔑 Autenticação
+## 🔑 Autenticação e segurança
 
-O acesso à API é protegido por **API Key**. Esta implementação utiliza uma classe de permissão customizada (`api/permissions.py`) que verifica a chave em cada requisição.
+
+A API implementa duas camadas principais de segurança: autenticação por API Key e controle de acesso de origem (CORS).
+
+1 -  **API Key**. Esta implementação utiliza uma classe de permissão customizada (`api/permissions.py`) que verifica a chave em cada requisição.
 
 Para se autenticar, inclua a chave no cabeçalho `Authorization` da sua requisição, prefixada com `ApiKey`.
 
@@ -220,7 +224,67 @@ Para se autenticar, inclua a chave no cabeçalho `Authorization` da sua requisi�
 
 A chave utilizada pelo servidor é definida na variável de ambiente `API_KEY`.
 
+2 - **CORS**:
+- O projeto utiliza django-cors-headers para restringir quais domínios podem fazer requisições à API a partir de um navegador.
+
+- Em Produção (DEBUG=False): Apenas as origens listadas na variável de ambiente CORS_ORIGINS são permitidas. Ex: CORS_ORIGINS=https://frontend.com.
+
+- Em Desenvolvimento (DEBUG=True): Para facilitar os testes locais, origens comuns como http://localhost:5173 e http://localhost:8000 são permitidas automaticamente
+
 ---
+
+## 🧾 Logs e Erros
+
+A aplicação Django REST Framework está configurada para registrar automaticamente **logs de acesso** e **logs de erro**, definidos no arquivo `settings.py` através do dicionário `LOGGING`.
+
+Esses logs são armazenados dentro da pasta `logs/` no container Docker, e podem ser acessados facilmente seguindo os passos abaixo.
+
+---
+
+### 🔍 Visualizando logs dentro do container
+
+1️⃣ **Liste os containers em execução:**
+```bash
+docker ps
+```
+2️⃣ Entre no container:
+```
+docker exec it nome_container bash
+```
+3️⃣ Acesse a pasta de logs:
+- Logs de acesso (requisições HTTP):
+```bash
+tail -f access.log
+```
+- Logs de erros (exceções, falhas, etc):
+```bash
+tail -f errors.log
+```
+
+
+## 🛡️ Validação e Sanitização de Dados
+
+Este projeto implementa rotinas robustas de sanitização e validação nos serializers do DRF (serializers.py) para garantir a integridade e a consistência dos dados recebidos pela API.
+
+1. Sanitização (Limpeza de Dados): Os dados de entrada são "limpos" antes de serem validados:
+
+- Remoção de Espaços: Campos de texto (como social_name, adress) utilizam .strip() para remover espaços em branco no início e no fim.
+
+- Normalização de Telefone: O phone_number passa por um re.sub() para remover todos os caracteres não numéricos (como (, ), -, ), armazenando apenas os dígitos.
+
+2. Validações (Regras de Negócio)
+
+- Após a limpeza, os dados são validados para garantir que atendem às regras da aplicação:
+
+- Campos Obrigatórios: Verifica-se se campos essenciais (como social_name, adress, professional_register) não estão vazios após a sanitização.
+
+- Formato de Registro: O professional_register só aceita caracteres alfanuméricos e hífen.
+
+- Formato de Telefone: phone_number deve conter um número mínimo de dígitos (10) após a limpeza.
+
+- Datas de Consultas: O campo data em ConsultasSerializer não pode aceitar datas no passado.
+
+- Regras de Objeto: O método validate() do ConsultasSerializer verifica regras cruzadas, como impedir o agendamento com profissionais considerados inativos.
 
 
 ## 🧪 Testes Automatizados
@@ -366,6 +430,11 @@ A aplicação está hospedada em uma instância **AWS EC2 (Ubuntu Server 22.04)*
 | **Staging**  | [`http://54.163.215.33:8001`](http://54.163.215.33:8001) | 8001  | Ambiente de testes (branch `develop`) |
 
 - Api key para testes na porta 8000 : Api-Key 1234567890abcdef
+<<<<<<< HEAD
+=======
+- Api key para testes na porta 8001 : Api-Key 1234567890teste
+
+>>>>>>> feature/logs
 
 
 ## 🔒 Segurança e GitHub Secrets

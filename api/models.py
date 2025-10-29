@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 class Profissional(models.Model):
     social_name = models.CharField(max_length=100)
-    professional_register = models.CharField(max_length=50, unique=True)
+    professional_register = models.CharField(max_length=50, unique=False)
     adress = models.CharField(max_length=200)
     phone_number = models.CharField(max_length=20)
 
