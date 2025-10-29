@@ -12,7 +12,8 @@ O projeto é totalmente containerizado com **Docker**, utiliza **PostgreSQL** co
 - [Arquitetura e Estrutura do Projeto](#-arquitetura-e-estrutura-do-projeto)
 - [Configuração do Ambiente Local](#-configuração-do-ambiente-local)
 - [Documentação da API (Endpoints)](#-documentação-da-api-endpoints)
-- [Autenticação](#-autenticação)
+- [Autenticação e Segurança](#-autenticação-e-segurança)
+- [Logs e Erros](#logs-e-erros)
 - [Testes Automatizados](#-testes-automatizados)
 - [Pipeline de CI/CD](#-pipeline-de-cicd)
 - [Deploy na AWS EC2](#-deploy-na-aws-ec2)
@@ -231,6 +232,35 @@ A chave utilizada pelo servidor é definida na variável de ambiente `API_KEY`.
 - Em Desenvolvimento (DEBUG=True): Para facilitar os testes locais, origens comuns como http://localhost:5173 e http://localhost:8000 são permitidas automaticamente
 
 ---
+
+## 🧾 Logs e Erros
+
+A aplicação Django REST Framework está configurada para registrar automaticamente **logs de acesso** e **logs de erro**, definidos no arquivo `settings.py` através do dicionário `LOGGING`.
+
+Esses logs são armazenados dentro da pasta `logs/` no container Docker, e podem ser acessados facilmente seguindo os passos abaixo.
+
+---
+
+### 🔍 Visualizando logs dentro do container
+
+1️⃣ **Liste os containers em execução:**
+```bash
+docker ps
+```
+2️⃣ Entre no container:
+```
+docker exec it nome_container bash
+```
+3️⃣ Acesse a pasta de logs:
+- Logs de acesso (requisições HTTP):
+```bash
+tail -f access.log
+```
+- Logs de erros (exceções, falhas, etc):
+```bash
+tail -f errors.log
+```
+
 
 ## 🛡️ Validação e Sanitização de Dados
 
