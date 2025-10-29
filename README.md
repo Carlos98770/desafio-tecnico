@@ -400,6 +400,7 @@ A aplicação está hospedada em uma instância **AWS EC2 (Ubuntu Server 22.04)*
 | **Staging**  | [`http://54.163.215.33:8001`](http://54.163.215.33:8001) | 8001  | Ambiente de testes (branch `develop`) |
 
 - Api key para testes na porta 8000 : Api-Key 1234567890abcdef
+- Api key para testes na porta 8001 : Api-Key 1234567890teste
 
 
 
