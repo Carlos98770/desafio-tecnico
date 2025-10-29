@@ -29,9 +29,23 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 # Lê os hosts do .env
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 
+# Carrega as origens permitidas do .env (ex: "https://meusite.com,https://app.meusite.com")
+cors_origins_str = os.environ.get("CORS_ORIGINS", "")
+
+# Converte a string em lista, removendo espaços e entradas vazias
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in cors_origins_str.split(",") if origin.strip()
+]
+
 # Adiciona automaticamente hosts locais quando estiver em DEBUG
 if DEBUG:
     ALLOWED_HOSTS += ["127.0.0.1", "localhost"]
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:8000", 
+        "http://127.0.0.1:8000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
 # Remove entradas vazias (caso haja vírgula sobrando)
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
@@ -51,6 +65,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -58,7 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'lacrei_saude.urls'
@@ -121,12 +136,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
-
-# Ou permitir apenas origens específicas (mais seguro)
-CORS_ALLOWED_ORIGINS = [
-   "http://localhost:8000",
-]
 
 
 # Static files (CSS, JavaScript, Images)
