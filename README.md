@@ -232,6 +232,30 @@ A chave utilizada pelo servidor é definida na variável de ambiente `API_KEY`.
 
 ---
 
+## 🛡️ Validação e Sanitização de Dados
+
+Este projeto implementa rotinas robustas de sanitização e validação nos serializers do DRF (serializers.py) para garantir a integridade e a consistência dos dados recebidos pela API.
+
+1. Sanitização (Limpeza de Dados): Os dados de entrada são "limpos" antes de serem validados:
+
+- Remoção de Espaços: Campos de texto (como social_name, adress) utilizam .strip() para remover espaços em branco no início e no fim.
+
+- Normalização de Telefone: O phone_number passa por um re.sub() para remover todos os caracteres não numéricos (como (, ), -, ), armazenando apenas os dígitos.
+
+2. Validações (Regras de Negócio)
+
+- Após a limpeza, os dados são validados para garantir que atendem às regras da aplicação:
+
+- Campos Obrigatórios: Verifica-se se campos essenciais (como social_name, adress, professional_register) não estão vazios após a sanitização.
+
+- Formato de Registro: O professional_register só aceita caracteres alfanuméricos e hífen.
+
+- Formato de Telefone: phone_number deve conter um número mínimo de dígitos (10) após a limpeza.
+
+- Datas de Consultas: O campo data em ConsultasSerializer não pode aceitar datas no passado.
+
+- Regras de Objeto: O método validate() do ConsultasSerializer verifica regras cruzadas, como impedir o agendamento com profissionais considerados inativos.
+
 
 ## 🧪 Testes Automatizados
 
